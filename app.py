@@ -114,6 +114,15 @@ def add_recipe():
         calories = request.form.get('calories')
         ingredients = request.form.get('ingredients')
         steps = request.form.get('steps')
+        ingredients = request.form.get('ingredients')
+        steps = request.form.get('steps')
+        cuisine = request.form.get('cuisine')   # <-- Add this line
+
+        conn = get_db_connection()
+        conn.execute(
+            'INSERT INTO recipes (title, time, calories, ingredients, steps, cuisine) VALUES (?, ?, ?, ?, ?, ?)', # <-- Add cuisine and one more ?
+            (title, time, calories, ingredients, steps, cuisine) # <-- Add cuisine here
+        )
         
         conn = get_db_connection()
         conn.execute(
@@ -136,6 +145,14 @@ def edit_recipe(id):
         time = request.form.get('time')
         calories = request.form.get('calories')
         ingredients = request.form.get('ingredients')
+        ingredients = request.form.get('ingredients')
+        steps = request.form.get('steps')
+        cuisine = request.form.get('cuisine')   # <-- Add this line
+
+        conn.execute(
+            'UPDATE recipes SET title = ?, time = ?, calories = ?, ingredients = ?, steps = ?, cuisine = ? WHERE id = ?', # <-- Add cuisine = ?
+            (title, time, calories, ingredients, steps, cuisine, id) # <-- Add cuisine here
+        )
         steps = request.form.get('steps')
         
         conn.execute(
