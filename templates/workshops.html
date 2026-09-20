@@ -3,7 +3,7 @@
 <div class="row mb-4">
     <div class="col-md-12">
         <h2 class="fw-bold text-dark">Culinary Workshops</h2>
-        <p class="text-muted">Learn professional skills from our expert chefs.</p>
+        <p class="text-muted">Learn professional skills from our expert chefs and reserve your spot.</p>
     </div>
 </div>
 
@@ -15,7 +15,19 @@
                 <h4 class="card-title text-dark fw-bold mb-2">{{ workshop['title'] }}</h4>
                 <p class="text-muted mb-1"><strong>Instructor:</strong> {{ workshop['instructor'] }}</p>
                 <p class="text-muted mb-2"><strong>Date:</strong> {{ workshop['date'] }}</p>
-                <p class="card-text text-dark">{{ workshop['description'] }}</p>
+                <p class="card-text text-dark mb-4">{{ workshop['description'] }}</p>
+                
+                <hr>
+                <h6 class="fw-bold text-dark">Reserve Your Spot</h6>
+                <form method="POST" action="{{ url_for('register_workshop', workshop_id=workshop['id']) }}">
+                    <div class="mb-2">
+                        <input type="text" name="name" class="form-control form-control-sm" placeholder="Your Name" required>
+                    </div>
+                    <div class="mb-2">
+                        <input type="email" name="email" class="form-control form-control-sm" placeholder="Your Email" required>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-purple w-100">Register for Workshop</button>
+                </form>
             </div>
         </div>
     </div>
