@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="mb-4">
-    <h2 class="fw-bold text-dark">Upcoming Cooking Workshops</h2>
-    <p class="text-muted">Learn live culinary skills and techniques from professional chefs!</p>
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="fw-bold text-dark">Culinary Workshops</h2>
+        <p class="text-muted">Learn professional skills from our expert chefs.</p>
+    </div>
 </div>
 
 <div class="row">
     {% for workshop in workshops %}
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm h-100 p-3 border-start border-4 border-warning">
-                <div class="card-body">
-                    <h3 class="card-title fw-bold text-dark">{{ workshop['title'] }}</h3>
-                    <h6 class="text-muted mb-3">👨‍🍳 Instructor: <strong>{{ workshop['instructor'] }}</strong> | 📅 Date: <strong>{{ workshop['date'] }}</strong></h6>
-                    <p class="card-text text-secondary">{{ workshop['description'] }}</p>
-                </div>
-                <div class="card-footer bg-white border-0">
-                    <button class="btn btn-custom btn-sm px-4" onclick="alert('Successfully registered for {{ workshop['title'] }}!');">Join Workshop</button>
-                </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100 p-3">
+            <div class="card-body">
+                <h4 class="card-title text-dark fw-bold mb-2">{{ workshop['title'] }}</h4>
+                <p class="text-muted mb-1"><strong>Instructor:</strong> {{ workshop['instructor'] }}</p>
+                <p class="text-muted mb-2"><strong>Date:</strong> {{ workshop['date'] }}</p>
+                <p class="card-text text-dark">{{ workshop['description'] }}</p>
             </div>
         </div>
+    </div>
     {% endfor %}
 </div>
 {% endblock %}
