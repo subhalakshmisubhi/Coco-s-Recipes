@@ -45,8 +45,7 @@ def init_db():
             instructor TEXT,
             date TEXT,
             description TEXT
-        )
-    ''')
+        )''')
     
     # Add a sample workshop if table is empty
     cursor = conn.cursor()
