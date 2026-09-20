@@ -45,15 +45,18 @@ def init_db():
             instructor TEXT,
             date TEXT,
             description TEXT
-        )''')
-    
+        )
+    ''')
+
     # Add a sample workshop if table is empty
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM workshops')
     if cursor.fetchone()[0] == 0:
-        conn.execute("INSERT INTO workshops (title, instructor, date, description) VALUES (?, ?, ?, ?)",
-                     ("Mastering Italian Pasta", "Chef Coco", "Oct 15, 2026", "Learn to make fresh handmade pasta from scratch with classic sauces!"))
-        conn.execute("INSERT INTO workshops (title, instructor, date, description) VALUES (?, ?, ?, ?)",
+        conn.execute(
+            "INSERT INTO workshops (title, instructor, date, description) VALUES (?, ?, ?, ?)",
+            ("Mastering Italian Pasta", "Chef Coco", "Oct 15, 2026", "Learn to make fresh pasta from scratch!")
+        )
+        conn.commit()
                      ("Baking Artisan Sourdough", "Chef Marco", "Oct 22, 2026", "Discover the secrets of maintaining a starter and baking crusty artisan bread."))
         conn.commit()
         
