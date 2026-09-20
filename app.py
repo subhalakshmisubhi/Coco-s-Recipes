@@ -22,6 +22,21 @@ def init_db():
             steps TEXT
         )
     ''')
+    #Cuisine Text
+    def init_db():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS recipes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            time TEXT,
+            calories TEXT,
+            ingredients TEXT,
+            steps TEXT,
+            cuisine TEXT
+        )
+    @app.route('/')
+    ...
     # Workshops table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS workshops (
