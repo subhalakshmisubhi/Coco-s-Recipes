@@ -87,6 +87,15 @@ def index():
     
     return render_template('index.html', recipes=recipes, search=search)
 
+@app.route('/workshops')
+def workshops():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    conn = get_db_connection()
+    workshops = conn.execute('SELECT * FROM workshops').fetchall()
+    conn.close()
+    return render_template('workshops.html', workshops=workshops)
+
 @app.route('/add', methods=['GET', 'POST'])
 def add_recipe():
     if 'user' not in session:
