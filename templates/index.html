@@ -24,7 +24,11 @@
                 <div class="card shadow-sm h-100 p-2">
                     <div class="card-body">
                         <h4 class="card-title text-dark fw-bold mb-2">{{ recipe['title'] }}</h4>
-                        <div class="mb-3">
+                        <div class="mb-3"> <div class="mb-3">
+        <span class="badge bg-warning text-dark mb-1">🍽️ {{ recipe['cuisine'] or 'General' }}</span><br>
+        <span class="badge bg-light text-dark border">⏱️ {{ recipe['time'] or 'N/A' }}</span>
+        <span class="badge bg-light text-dark border">🔥 {{ recipe['calories'] or 'N/A' }} kcal</span>
+    </div>
                             <span class="badge bg-light text-dark border">⏱️ {{ recipe['time'] or 'N/A' }}</span>
                             <span class="badge bg-light text-dark border">🔥 {{ recipe['calories'] or 'N/A' }} kcal</span>
                         </div>
