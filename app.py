@@ -36,6 +36,17 @@ def init_db():
         )
     ''')
 
+    # Workshop Registrations table
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS workshop_registrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workshop_id INTEGER,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            FOREIGN KEY (workshop_id) REFERENCES workshops (id)
+        )
+    ''')
+
     # Add sample workshop if table is empty
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM workshops')
@@ -95,6 +106,25 @@ def workshops():
     workshops = conn.execute('SELECT * FROM workshops').fetchall()
     conn.close()
     return render_template('workshops.html', workshops=workshops)
+
+@app.route('/workshop/register/<int:workshop_id>', methods=['POST'])
+def register_workshop(workshop_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    name = request.form.get('name')
+    email = request.form.get('email')
+    
+    if name and email:
+        conn = get_db_connection()
+        conn.execute(
+            'INSERT INTO workshop_registrations (workshop_id, name, email) VALUES (?, ?, ?)',
+            (workshop_id, name, email)
+        )
+        conn.commit()
+        conn.close()
+        
+    return redirect(url_for('workshops'))
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_recipe():
