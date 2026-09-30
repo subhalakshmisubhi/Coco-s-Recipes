@@ -81,10 +81,19 @@ def init_db():
         )
     ''')
 
+    # Insert a default admin user so you can log in immediately
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM users')
+    if cursor.fetchone()[0] == 0:
+        conn.execute(
+            'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
+            ('admin', 'coco123', 'admin@coco.com')
+        )
+
     conn.commit()
     conn.close()
 
-# --- Authentication Routes (Register & Login) ---
+# --- Authentication Routes ---
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
