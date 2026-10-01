@@ -99,6 +99,10 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         email = request.form.get('email')
+        
+        if not username or not password or not email:
+            return render_template('register.html', error='All fields are required!')
+            
         try:
             conn = get_db_connection()
             conn.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', (username, password, email))
@@ -107,8 +111,8 @@ def register():
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             return render_template('register.html', error='Username already exists!')
+            
     return render_template('register.html')
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
