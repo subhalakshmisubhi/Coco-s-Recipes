@@ -9,8 +9,12 @@ app.secret_key = 'coco_super_secret_key'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'subhalakshmisubhi@gmail.com'  
-app.config['MAIL_PASSWORD'] = 'ejdn ianf omil iulm'  # Your 16-character app password
+app.config['MAIL_USERNAME'] = (
+    'subhalakshmisubhi@gmail.com'  # Replace with your actual email
+)
+app.config['MAIL_PASSWORD'] = (
+    'ejdn ianf omil iulm'  # Replace with your 16-character app password
+)
 app.config['MAIL_DEFAULT_SENDER'] = 'subhalakshmisubhi@gmail.com'
 
 mail = Mail(app)
@@ -81,7 +85,7 @@ def init_db():
         ''')
     conn.commit()
 
-    # Create default admin user (use your real email so notifications succeed)
+    # Create default admin user (using your real email so emails deliver cleanly)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM users WHERE username = ?', ('admin',))
     if not cursor.fetchone():
@@ -106,6 +110,7 @@ def init_db():
       conn.commit()
 
 
+# Initialize Database on Startup
 init_db()
 
 
@@ -167,7 +172,7 @@ def add_recipe():
     ingredients = request.form.get('ingredients')
     instructions = request.form.get('instructions')
     category = request.form.get('category')
-    calories = request.form.get('calories', 0)
+    calories = request.form.get('calories') or 0
 
     with get_db_connection() as conn:
       conn.execute(
@@ -196,7 +201,7 @@ def edit_recipe(id):
     ingredients = request.form.get('ingredients')
     instructions = request.form.get('instructions')
     category = request.form.get('category')
-    calories = request.form.get('calories', 0)
+    calories = request.form.get('calories') or 0
 
     with get_db_connection() as conn:
       conn.execute(
@@ -272,12 +277,30 @@ def unregister_course(course_id):
   if 'user_id' not in session:
     return redirect(url_for('login'))
 
-  with get_db_connection() as conn:
-    conn.execute(
-        'DELETE FROM course_registrations WHERE course_id = ? AND user_id = ?',
-        (course_id, session['user_id'])
-    )
-    conn.commit()
+  try:
+    with get_db_connection() as conn:
+      user = conn.execute('SELECT username, email FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+      course = conn.execute('SELECT title FROM courses WHERE id = ?', (course_id,)).fetchone()
+
+      conn.execute(
+          'DELETE FROM course_registrations WHERE course_id = ? AND user_id = ?',
+          (course_id, session['user_id'])
+      )
+      conn.commit()
+
+    if user and user['email'] and course:
+      try:
+        msg = Message(
+            subject=f'Registration Cancelled for {course["title"]}',
+            recipients=[user['email']],
+            body=f'Hi {user["username"]},\n\nYour registration for the workshop "{course["title"]}" has been successfully cancelled.\n\nWe hope to see you in another workshop soon!\n\n- The Coco\'s Recipes Team'
+        )
+        mail.send(msg)
+      except Exception as e:
+        print(f'Cancellation email dispatch failed: {e}')
+
+  except Exception as e:
+    print(f'Unregistration failed: {e}')
 
   return redirect(url_for('courses'))
 
