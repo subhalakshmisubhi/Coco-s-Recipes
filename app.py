@@ -5,16 +5,12 @@ from flask_mail import Mail, Message
 app = Flask(__name__)
 app.secret_key = 'coco_super_secret_key'
 
-# --- EMAIL CONFIGURATION (Using Gmail App Password) ---
+# --- EMAIL CONFIGURATION ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = (
-    'subhalakshmisubhi@gmail.com'  # Replace with your actual email
-)
-app.config['MAIL_PASSWORD'] = (
-    'ejdn ianf omil iulm'  # Replace with your 16-character app password
-)
+app.config['MAIL_USERNAME'] = 'subhalakshmisubhi@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'abcdefghijklmnop'  # Your 16-character app password
 app.config['MAIL_DEFAULT_SENDER'] = 'subhalakshmisubhi@gmail.com'
 
 mail = Mail(app)
@@ -85,36 +81,23 @@ def init_db():
         ''')
     conn.commit()
 
-    # Create default admin user if not exists
+    # Create default admin user (use your real email so notifications succeed)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM users WHERE username = ?', ('admin',))
     if not cursor.fetchone():
       conn.execute(
-          'INSERT INTO users (username, password, email, role) VALUES (?, ?,'
-          ' ?, ?)',
-          ('admin', 'admin123', 'admin@cocosrecipes.com', 'admin'),
+          'INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)',
+          ('admin', 'admin123', 'subhalakshmisubhi@gmail.com', 'admin'),
       )
       conn.commit()
 
-    # Seed some sample courses/workshops if table is empty
+    # Seed sample courses if empty
     cursor.execute('SELECT COUNT(*) FROM courses')
     if cursor.fetchone()[0] == 0:
       sample_courses = [
-          (
-              'Mastering Italian Pasta',
-              'Learn how to make authentic fresh pasta from scratch.',
-              'Chef Marco',
-          ),
-          (
-              'Bakery Essentials & Pastries',
-              'Perfect your baking skills with croissants and tarts.',
-              'Chef Chloe',
-          ),
-          (
-              'Healthy Plant-Based Cooking',
-              'Delicious, nutrient-dense vegan recipes for everyday life.',
-              'Chef Alex',
-          ),
+          ('Mastering Italian Pasta', 'Learn how to make authentic fresh pasta from scratch.', 'Chef Marco'),
+          ('Bakery Essentials & Pastries', 'Perfect your baking skills with croissants and tarts.', 'Chef Chloe'),
+          ('Healthy Plant-Based Cooking', 'Delicious, nutrient-dense vegan recipes for everyday life.', 'Chef Alex'),
       ]
       conn.executemany(
           'INSERT INTO courses (title, description, mentor) VALUES (?, ?, ?)',
@@ -123,7 +106,6 @@ def init_db():
       conn.commit()
 
 
-# Initialize Database on Startup
 init_db()
 
 
@@ -144,9 +126,7 @@ def recipes():
 @app.route('/recipe/<int:id>')
 def recipe_detail(id):
   with get_db_connection() as conn:
-    recipe = conn.execute(
-        'SELECT * FROM recipes WHERE id = ?', (id,)
-    ).fetchone()
+    recipe = conn.execute('SELECT * FROM recipes WHERE id = ?', (id,)).fetchone()
     reviews = conn.execute(
         '''
             SELECT reviews.*, users.username FROM reviews 
@@ -169,8 +149,7 @@ def add_review(id):
   if comment:
     with get_db_connection() as conn:
       conn.execute(
-          'INSERT INTO reviews (recipe_id, user_id, rating, comment) VALUES (?,'
-          ' ?, ?, ?)',
+          'INSERT INTO reviews (recipe_id, user_id, rating, comment) VALUES (?, ?, ?, ?)',
           (id, session['user_id'], rating, comment),
       )
       conn.commit()
@@ -192,16 +171,8 @@ def add_recipe():
 
     with get_db_connection() as conn:
       conn.execute(
-          'INSERT INTO recipes (title, ingredients, instructions, category,'
-          ' calories, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-          (
-              title,
-              ingredients,
-              instructions,
-              category,
-              calories,
-              session['user_id'],
-          ),
+          'INSERT INTO recipes (title, ingredients, instructions, category, calories, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+          (title, ingredients, instructions, category, calories, session['user_id']),
       )
       conn.commit()
     return redirect(url_for('recipes'))
@@ -215,9 +186,7 @@ def edit_recipe(id):
     return redirect(url_for('login'))
 
   with get_db_connection() as conn:
-    recipe = conn.execute(
-        'SELECT * FROM recipes WHERE id = ?', (id,)
-    ).fetchone()
+    recipe = conn.execute('SELECT * FROM recipes WHERE id = ?', (id,)).fetchone()
 
   if not recipe:
     return 'Recipe not found', 404
@@ -231,8 +200,7 @@ def edit_recipe(id):
 
     with get_db_connection() as conn:
       conn.execute(
-          'UPDATE recipes SET title = ?, ingredients = ?, instructions = ?,'
-          ' category = ?, calories = ? WHERE id = ?',
+          'UPDATE recipes SET title = ?, ingredients = ?, instructions = ?, category = ?, calories = ? WHERE id = ?',
           (title, ingredients, instructions, category, calories, id),
       )
       conn.commit()
@@ -263,9 +231,7 @@ def courses():
           (session['user_id'],),
       ).fetchall()
       registered_ids = [r['course_id'] for r in regs]
-  return render_template(
-      'courses.html', courses=courses, registered_ids=registered_ids
-  )
+  return render_template('courses.html', courses=courses, registered_ids=registered_ids)
 
 
 @app.route('/course/register/<int:course_id>', methods=['POST'])
@@ -281,34 +247,37 @@ def register_course(course_id):
       )
       conn.commit()
 
-      # Fetch user details and course title for confirmation email
-      user = conn.execute(
-          'SELECT username, email FROM users WHERE id = ?',
-          (session['user_id'],),
-      ).fetchone()
-      course = conn.execute(
-          'SELECT title, mentor FROM courses WHERE id = ?', (course_id,)
-      ).fetchone()
+      user = conn.execute('SELECT username, email FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+      course = conn.execute('SELECT title, mentor FROM courses WHERE id = ?', (course_id,)).fetchone()
 
-    # --- SEND WORKSHOP REGISTRATION EMAIL ---
     if user and user['email'] and course:
       try:
         msg = Message(
             subject=f'Successfully Registered for {course["title"]}!',
             recipients=[user['email']],
-            body=(
-                f'Hi {user["username"]},\n\nYou have successfully registered for'
-                f' the workshop: {course["title"]}.\nMentor:'
-                f' {course["mentor"]}\n\nWe look forward to seeing you'
-                " there!\n\n- The Coco's Recipes Team"
-            ),
+            body=f'Hi {user["username"]},\n\nYou have successfully registered for the workshop: {course["title"]}.\nMentor: {course["mentor"]}\n\nWe look forward to seeing you there!\n\n- The Coco\'s Recipes Team'
         )
         mail.send(msg)
       except Exception as e:
         print(f'Workshop email dispatch failed: {e}')
 
   except sqlite3.IntegrityError:
-    pass  # Already registered, skip gracefully
+    pass
+
+  return redirect(url_for('courses'))
+
+
+@app.route('/course/unregister/<int:course_id>', methods=['POST'])
+def unregister_course(course_id):
+  if 'user_id' not in session:
+    return redirect(url_for('login'))
+
+  with get_db_connection() as conn:
+    conn.execute(
+        'DELETE FROM course_registrations WHERE course_id = ? AND user_id = ?',
+        (course_id, session['user_id'])
+    )
+    conn.commit()
 
   return redirect(url_for('courses'))
 
@@ -323,23 +292,17 @@ def register():
     try:
       with get_db_connection() as conn:
         conn.execute(
-            'INSERT INTO users (username, password, email, role) VALUES (?, ?,'
-            ' ?, ?)',
+            'INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)',
             (username, password, email, 'user'),
         )
         conn.commit()
 
-      # Send welcome email
       if email:
         try:
           msg = Message(
               subject="Welcome to Coco's Recipes!",
               recipients=[email],
-              body=(
-                  f'Hi {username},\n\nThank you for registering on Coco\'s'
-                  ' Recipes! We are thrilled to have you join our culinary'
-                  ' community.\n\nHappy cooking!\n- The Coco\'s Recipes Team'
-              ),
+              body=f'Hi {username},\n\nThank you for registering on Coco\'s Recipes! We are thrilled to have you join our culinary community.\n\nHappy cooking!\n- The Coco\'s Recipes Team'
           )
           mail.send(msg)
         except Exception as e:
@@ -347,9 +310,7 @@ def register():
 
       return redirect(url_for('login'))
     except sqlite3.IntegrityError:
-      return render_template(
-          'register.html', error='Username already exists!'
-      )
+      return render_template('register.html', error='Username already exists!')
 
   return render_template('register.html')
 
