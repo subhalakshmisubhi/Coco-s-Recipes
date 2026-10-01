@@ -14,7 +14,7 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
     
-    # Database Tables with Identifiers
+    # 1. Users Table (with user_id)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,18 +24,19 @@ def init_db():
         )
     ''')
 
+    # 2. Recipes Table (with recipe_id)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS recipes (
             recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             time TEXT,
             calories TEXT,
-            ingredients TEXT,
             steps TEXT,
             cuisine TEXT
         )
     ''')
 
+    # 3. Ingredients Table (with ingredient_id and foreign key to recipe)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS ingredients (
             ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,6 +47,7 @@ def init_db():
         )
     ''')
 
+    # 4. Courses Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS courses (
             course_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,6 +58,7 @@ def init_db():
         )
     ''')
 
+    # 5. Course Registrations Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS course_registrations (
             registration_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,19 +69,7 @@ def init_db():
         )
     ''')
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS reviews (
-            review_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            recipe_id INTEGER,
-            user_id INTEGER,
-            rating INTEGER,
-            comment TEXT,
-            FOREIGN KEY (recipe_id) REFERENCES recipes (recipe_id),
-            FOREIGN KEY (user_id) REFERENCES users (user_id)
-        )
-    ''')
-
-    # Seed Default Admin User
+    # Seed Admin User
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
@@ -91,9 +82,8 @@ def init_db():
     cursor.execute('SELECT COUNT(*) FROM courses')
     if cursor.fetchone()[0] == 0:
         sample_courses = [
-            ('Mastering Italian Pasta', 'Chef Luigi', 'October 15, 2026', 'Learn the secrets of making handmade pasta from scratch, classic carbonara, and rich marinara sauce.'),
-            ('Artisan Baking & Pastries', 'Chef Coco', 'October 22, 2026', 'Discover professional baking techniques for croissants, French macarons, and artisan sourdough bread.'),
-            ('Quick & Healthy Weeknight Meals', 'Chef Maya', 'November 5, 2026', 'Master fast, nutritious, and flavorful meals designed for busy schedules without compromising on taste.')
+            ('Mastering Italian Pasta', 'Chef Luigi', 'October 15, 2026', 'Learn the secrets of making handmade pasta from scratch.'),
+            ('Artisan Baking & Pastries', 'Chef Coco', 'October 22, 2026', 'Discover professional baking techniques for croissants and breads.')
         ]
         conn.executemany(
             'INSERT INTO courses (title, instructor, date, description) VALUES (?, ?, ?, ?)',
@@ -103,15 +93,12 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- Authentication Routes ---
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         email = request.form.get('email')
-        
         try:
             conn = get_db_connection()
             conn.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', (username, password, email))
@@ -120,7 +107,6 @@ def register():
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             return render_template('register.html', error='Username already exists!')
-            
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -128,18 +114,15 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
         conn = get_db_connection()
         user = conn.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username, password)).fetchone()
         conn.close()
-        
         if user:
             session['user_id'] = user['user_id']
             session['username'] = user['username']
             return redirect(url_for('index'))
         else:
             return render_template('login.html', error='Invalid username or password')
-            
     return render_template('login.html')
 
 @app.route('/logout')
@@ -147,25 +130,24 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- Main App Routes ---
-
 @app.route('/')
 def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    search = request.args.get('search', '')
     conn = get_db_connection()
-    if search:
-        recipes = conn.execute(
-            "SELECT * FROM recipes WHERE title LIKE ? OR ingredients LIKE ?",
-            (f'%{search}%', f'%{search}%')
-        ).fetchall()
-    else:
-        recipes = conn.execute('SELECT * FROM recipes').fetchall()
-    conn.close()
+    recipes = conn.execute('SELECT * FROM recipes').fetchall()
     
-    return render_template('index.html', recipes=recipes, search=search)
+    # Fetch ingredients for each recipe so we can display ingredient_ids
+    recipes_with_ingredients = []
+    for recipe in recipes:
+        recipe_dict = dict(recipe)
+        ingredients = conn.execute('SELECT * FROM ingredients WHERE recipe_id = ?', (recipe['recipe_id'],)).fetchall()
+        recipe_dict['ingredients_list'] = ingredients
+        recipes_with_ingredients.append(recipe_dict)
+        
+    conn.close()
+    return render_template('index.html', recipes=recipes_with_ingredients)
 
 @app.route('/courses')
 def courses():
@@ -180,12 +162,8 @@ def courses():
 def register_course(course_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
     conn = get_db_connection()
-    conn.execute(
-        'INSERT INTO course_registrations (course_id, user_id) VALUES (?, ?)',
-        (course_id, session['user_id'])
-    )
+    conn.execute('INSERT INTO course_registrations (course_id, user_id) VALUES (?, ?)', (course_id, session['user_id']))
     conn.commit()
     conn.close()
     return redirect(url_for('courses'))
@@ -199,54 +177,42 @@ def add_recipe():
         title = request.form.get('title')
         time = request.form.get('time')
         calories = request.form.get('calories')
-        ingredients = request.form.get('ingredients')
         steps = request.form.get('steps')
         cuisine = request.form.get('cuisine')
+        raw_ingredients = request.form.get('ingredients') # comma separated string
         
         conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO recipes (title, time, calories, ingredients, steps, cuisine) VALUES (?, ?, ?, ?, ?, ?)',
-            (title, time, calories, ingredients, steps, cuisine)
+        cursor = conn.cursor()
+        
+        # Insert Recipe
+        cursor.execute(
+            'INSERT INTO recipes (title, time, calories, steps, cuisine) VALUES (?, ?, ?, ?, ?)',
+            (title, time, calories, steps, cuisine)
         )
+        recipe_id = cursor.lastrowid
+        
+        # Insert individual ingredients to generate ingredient_ids
+        if raw_ingredients:
+            ingredient_items = [item.strip() for item in raw_ingredients.split(',')]
+            for item in ingredient_items:
+                if item:
+                    conn.execute(
+                        'INSERT INTO ingredients (recipe_id, ingredient_name, quantity) VALUES (?, ?, ?)',
+                        (recipe_id, item, 'As needed')
+                    )
+                    
         conn.commit()
         conn.close()
         return redirect(url_for('index'))
         
     return render_template('add_recipe.html')
 
-@app.route('/edit/<int:recipe_id>', methods=['GET', 'POST'])
-def edit_recipe(recipe_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db_connection()
-    recipe = conn.execute('SELECT * FROM recipes WHERE recipe_id = ?', (recipe_id,)).fetchone()
-    
-    if request.method == 'POST':
-        title = request.form.get('title')
-        time = request.form.get('time')
-        calories = request.form.get('calories')
-        ingredients = request.form.get('ingredients')
-        steps = request.form.get('steps')
-        cuisine = request.form.get('cuisine')
-        
-        conn.execute(
-            'UPDATE recipes SET title = ?, time = ?, calories = ?, ingredients = ?, steps = ?, cuisine = ? WHERE recipe_id = ?',
-            (title, time, calories, ingredients, steps, cuisine, recipe_id)
-        )
-        conn.commit()
-        conn.close()
-        return redirect(url_for('index'))
-        
-    conn.close()
-    return render_template('edit_recipe.html', recipe=recipe)
-
 @app.route('/delete/<int:recipe_id>', methods=['POST'])
 def delete_recipe(recipe_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
     conn = get_db_connection()
+    conn.execute('DELETE FROM ingredients WHERE recipe_id = ?', (recipe_id,))
     conn.execute('DELETE FROM recipes WHERE recipe_id = ?', (recipe_id,))
     conn.commit()
     conn.close()
