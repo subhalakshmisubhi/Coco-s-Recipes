@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import os
 
-# Explicitly set the template folder path to avoid any TemplateNotFound errors
 template_dir = os.path.abspath(os.path.dirname(__file__)) + '/templates'
 app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'coco_secret_key'
@@ -14,8 +13,9 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
+    print("Initializing database and tables...")
     
-    # 1. User / Member Table (with user_id)
+    # 1. Users Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +25,7 @@ def init_db():
         )
     ''')
 
-    # 2. Recipes Table (with recipe_id)
+    # 2. Recipes Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS recipes (
             recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +38,7 @@ def init_db():
         )
     ''')
 
-    # 3. Ingredients Table (with ingredient_id and foreign key to recipe)
+    # 3. Ingredients Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS ingredients (
             ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +49,7 @@ def init_db():
         )
     ''')
 
-    # 4. Courses / Workshops Table (with course_id)
+    # 4. Courses Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS courses (
             course_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +60,7 @@ def init_db():
         )
     ''')
 
-    # 5. Course Registrations Table (with registration tracking)
+    # 5. Course Registrations Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS course_registrations (
             registration_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,7 +71,7 @@ def init_db():
         )
     ''')
 
-    # 6. Reviews Table (with review_id)
+    # 6. Reviews Table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS reviews (
             review_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +84,7 @@ def init_db():
         )
     ''')
 
-    # Insert a default admin user so you can log in immediately
+    # Insert default admin user
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
@@ -92,8 +92,9 @@ def init_db():
             'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
             ('admin', 'coco123', 'admin@coco.com')
         )
+        print("Default admin user created.")
 
-    # Insert sample courses/workshops if none exist
+    # Insert sample workshops
     cursor.execute('SELECT COUNT(*) FROM courses')
     if cursor.fetchone()[0] == 0:
         sample_courses = [
@@ -105,11 +106,10 @@ def init_db():
             'INSERT INTO courses (title, instructor, date, description) VALUES (?, ?, ?, ?)',
             sample_courses
         )
+        print("Sample workshops seeded successfully.")
 
     conn.commit()
     conn.close()
-
-# --- Authentication Routes ---
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -152,8 +152,6 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
-
-# --- Main App Routes ---
 
 @app.route('/')
 def index():
@@ -229,6 +227,7 @@ def edit_recipe(recipe_id):
     recipe = conn.execute('SELECT * FROM recipes WHERE recipe_id = ?', (recipe_id,)).fetchone()
     
     if request.method == 'POST':
+        title = request.form.get('title')
         title = request.form.get('title')
         time = request.form.get('time')
         calories = request.form.get('calories')
