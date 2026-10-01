@@ -9,12 +9,8 @@ app.secret_key = 'coco_super_secret_key'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = (
-    'subhalakshmisubhi@gmail.com'  # Replace with your actual email
-)
-app.config['MAIL_PASSWORD'] = (
-    'ejdn ianf omil iulm'  # Replace with your 16-character app password
-)
+app.config['MAIL_USERNAME'] = 'subhalakshmisubhi@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ejdn ianf omil iulm'  # Your 16-character app password
 app.config['MAIL_DEFAULT_SENDER'] = 'subhalakshmisubhi@gmail.com'
 
 mail = Mail(app)
@@ -38,7 +34,7 @@ def init_db():
                 role TEXT DEFAULT 'user'
             )
         ''')
-    # Recipes Table
+    # Recipes Table (Added duration column)
     conn.execute('''
             CREATE TABLE IF NOT EXISTS recipes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,6 +43,7 @@ def init_db():
                 instructions TEXT NOT NULL,
                 category TEXT,
                 calories INTEGER,
+                duration TEXT,
                 user_id INTEGER,
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
@@ -85,7 +82,7 @@ def init_db():
         ''')
     conn.commit()
 
-    # Create default admin user (using your real email so emails deliver cleanly)
+    # Create default admin user
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM users WHERE username = ?', ('admin',))
     if not cursor.fetchone():
@@ -110,7 +107,6 @@ def init_db():
       conn.commit()
 
 
-# Initialize Database on Startup
 init_db()
 
 
@@ -173,11 +169,12 @@ def add_recipe():
     instructions = request.form.get('instructions')
     category = request.form.get('category')
     calories = request.form.get('calories') or 0
+    duration = request.form.get('duration') or '30 mins'
 
     with get_db_connection() as conn:
       conn.execute(
-          'INSERT INTO recipes (title, ingredients, instructions, category, calories, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-          (title, ingredients, instructions, category, calories, session['user_id']),
+          'INSERT INTO recipes (title, ingredients, instructions, category, calories, duration, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          (title, ingredients, instructions, category, calories, duration, session['user_id']),
       )
       conn.commit()
     return redirect(url_for('recipes'))
@@ -202,11 +199,12 @@ def edit_recipe(id):
     instructions = request.form.get('instructions')
     category = request.form.get('category')
     calories = request.form.get('calories') or 0
+    duration = request.form.get('duration') or '30 mins'
 
     with get_db_connection() as conn:
       conn.execute(
-          'UPDATE recipes SET title = ?, ingredients = ?, instructions = ?, category = ?, calories = ? WHERE id = ?',
-          (title, ingredients, instructions, category, calories, id),
+          'UPDATE recipes SET title = ?, ingredients = ?, instructions = ?, category = ?, calories = ?, duration = ? WHERE id = ?',
+          (title, ingredients, instructions, category, calories, duration, id),
       )
       conn.commit()
     return redirect(url_for('recipe_detail', id=id))
