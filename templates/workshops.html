@@ -1,36 +1,58 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <h2 class="fw-bold text-dark">Culinary Workshops</h2>
-        <p class="text-muted">Learn professional skills from our expert chefs and reserve your spot.</p>
-    </div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workshops - Coco's Recipes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-purple { background-color: #6f42c1 !important; }
+        .btn-purple { background-color: #6f42c1; color: white; }
+        .btn-purple:hover { background-color: #5a3298; color: white; }
+    </style>
+</head>
+<body class="bg-light">
 
-<div class="row">
-    {% for workshop in workshops %}
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100 p-3">
-            <div class="card-body">
-                <h4 class="card-title text-dark fw-bold mb-2">{{ workshop['title'] }}</h4>
-                <p class="text-muted mb-1"><strong>Instructor:</strong> {{ workshop['instructor'] }}</p>
-                <p class="text-muted mb-2"><strong>Date:</strong> {{ workshop['date'] }}</p>
-                <p class="card-text text-dark mb-4">{{ workshop['description'] }}</p>
-                
-                <hr>
-                <h6 class="fw-bold text-dark">Reserve Your Spot</h6>
-                <form method="POST" action="{{ url_for('register_workshop', workshop_id=workshop['id']) }}">
-                    <div class="mb-2">
-                        <input type="text" name="name" class="form-control form-control-sm" placeholder="Your Name" required>
-                    </div>
-                    <div class="mb-2">
-                        <input type="email" name="email" class="form-control form-control-sm" placeholder="Your Email" required>
-                    </div>
-                    <button type="submit" class="btn btn-sm btn-purple w-100">Register for Workshop</button>
-                </form>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-purple mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">🧁🍝 Coco's Recipes</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">Recipes</a>
+                <a class="nav-link active" href="{{ url_for('courses') }}">Workshops</a>
+                <a class="nav-link text-warning" href="{{ url_for('logout') }}">Logout</a>
             </div>
         </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h2 class="fw-bold mb-4" style="color: #6f42c1;">👩‍🍳 Culinary Workshops & Courses</h2>
+        
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h4 class="card-title fw-bold text-dark">{{ course.title }}</h4>
+                            <p class="text-muted small mb-2">Instructor: <strong>{{ course.instructor }}</strong></p>
+                            <p class="text-muted small mb-3">Date: <strong>{{ course.date }}</strong></p>
+                            <p class="card-text flex-grow-1">{{ course.description }}</p>
+                            
+                            <form action="{{ url_for('register_course', course_id=course.course_id) }}" method="POST" class="mt-3">
+                                <button type="submit" class="btn btn-purple w-100">Register for Workshop</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No workshops available right now. Check back soon!</p>
+                </div>
+            {% endfor %}
+        </div>
     </div>
-    {% endfor %}
-</div>
-{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
