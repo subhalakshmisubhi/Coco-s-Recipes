@@ -9,22 +9,21 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">Coco's Recipes</a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('recipes') }}">Recipes</a>
-                <a class="nav-link" href="{{ url_for('courses') }}">Workshops</a>
-                {% if session.get('user_id') %}
-                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                {% endif %}
-            </div>
         </div>
     </nav>
 
     <div class="container mb-5">
+        <div class="mb-3">
+            <a href="javascript:history.back()" class="btn btn-secondary btn-sm">&larr; Back</a>
+        </div>
+
         <div class="card shadow-sm p-4">
             <h1 class="mb-3">{{ recipe.title }}</h1>
-            <h5 class="text-muted mb-4">Category: {{ recipe.category }} | Calories: {{ recipe.calories }} kcal</h5>
+            <h5 class="text-muted mb-4">
+                Category: {{ recipe.category }} | 
+                Calories: {{ recipe.calories }} kcal | 
+                ⏱️ Duration: {{ recipe.duration }}
+            </h5>
             
             <div class="mb-4">
                 <h4>Ingredients</h4>
@@ -72,6 +71,8 @@
             <div class="card bg-light shadow-sm mt-4">
                 <div class="card-body">
                     <h5 class="card-title">Leave a Review</h5>
+                    <form action="{{ url_for('recipe_detail', id=recipe.id) }}" method="POST"> <!-- Note: review route -->
+                    </form>
                     <form action="{{ url_for('add_review', id=recipe.id) }}" method="POST">
                         <div class="mb-3">
                             <label for="rating" class="form-label">Rating (1 to 5 Stars)</label>
@@ -85,7 +86,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="comment" class="form-label">Comment</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="3" required placeholder="How did this recipe turn out for you?"></textarea>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" required placeholder="How did this recipe turn out?"></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary">Post Review</button>
                     </form>
