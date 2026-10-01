@@ -14,7 +14,7 @@
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">🧁🍝 Coco's Recipes</a>
             <div class="navbar-nav ms-auto align-items-center">
-                <span class="badge bg-light text-dark me-3 py-2 px-3">Active User ID: {{ session.user_id }} ({{ session.username }})</span>
+                <span class="badge bg-light text-dark me-3 py-2 px-3">User ID: {{ session.user_id }} ({{ session.username }})</span>
                 <a class="nav-link active" href="{{ url_for('index') }}">Recipes</a>
                 <a class="nav-link" href="{{ url_for('courses') }}">Workshops</a>
                 <a class="nav-link" href="{{ url_for('add_recipe') }}">+ Add Recipe</a>
@@ -31,12 +31,12 @@
                         <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h4 class="card-title fw-bold text-dark m-0">{{ recipe.title }}</h4>
-                                <span class="badge bg-secondary">Recipe ID: {{ recipe.recipe_id }}</span>
+                                <span class="badge bg-secondary">ID: {{ recipe.recipe_id }}</span>
                             </div>
                             <span class="badge bg-light text-dark border mb-2 align-self-start">{{ recipe.cuisine }}</span>
                             <p class="text-muted small mb-1">⏱ Time: {{ recipe.time }} | 🔥 Calories: {{ recipe.calories }}</p>
                             <hr>
-                            <p class="card-text mb-1"><strong>Ingredients (with Ingredient IDs):</strong></p>
+                            <p class="card-text mb-1"><strong>Ingredients (with IDs):</strong></p>
                             <ul class="small text-muted ps-3 mb-3">
                                 {% for ing in recipe.ingredients_list %}
                                     <li>[ID: {{ ing.ingredient_id }}] {{ ing.ingredient_name }}</li>
@@ -46,9 +46,12 @@
                             </ul>
                             <p class="card-text flex-grow-1"><strong>Steps:</strong><br>{{ recipe.steps }}</p>
                             
-                            <form action="{{ url_for('delete_recipe', recipe_id=recipe.recipe_id) }}" method="POST" class="mt-3">
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Delete this recipe?');">Delete Recipe</button>
-                            </form>
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="{{ url_for('edit_recipe', recipe_id=recipe.recipe_id) }}" class="btn btn-sm btn-outline-primary w-50">Edit</a>
+                                <form action="{{ url_for('delete_recipe', recipe_id=recipe.recipe_id) }}" method="POST" class="w-50">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Delete recipe?');">Delete</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
