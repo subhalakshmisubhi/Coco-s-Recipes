@@ -1,8 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+from flask_mail import Mail, Message
 import sqlite3
 
 app = Flask(__name__)
 app.secret_key = 'coco_super_secret_key'
+
+# --- EMAIL CONFIGURATION (Using Gmail SMTP Example) ---
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your_email@gmail.com'         # Replace with your Gmail
+app.config['MAIL_PASSWORD'] = 'your_gmail_app_password'     # Replace with your Gmail App Password
+app.config['MAIL_DEFAULT_SENDER'] = 'your_email@gmail.com'
+
+mail = Mail(app)
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -147,6 +158,19 @@ def register():
                          (username, password, email, 'user'))
             conn.commit()
             conn.close()
+            
+            # --- SEND WELCOME EMAIL ---
+            if email:
+                try:
+                    msg = Message(
+                        subject='Welcome to Coco\'s Recipes!',
+                        recipients=[email],
+                        body=f'Hi {username},\n\nThank you for registering on Coco\'s Recipes! We are thrilled to have you join our culinary community.\n\nHappy cooking!\n- The Coco\'s Recipes Team'
+                    )
+                    mail.send(msg)
+                except Exception as e:
+                    print(f"Email could not be sent: {e}")
+            
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             return render_template('register.html', error='Username already exists!')
@@ -203,7 +227,6 @@ def courses():
         return redirect(url_for('login'))
     conn = get_db_connection()
     all_courses = conn.execute('SELECT * FROM courses').fetchall()
-    # Check registered courses for current user
     user_regs = conn.execute('SELECT course_id FROM course_registrations WHERE user_id = ?', (session['user_id'],)).fetchall()
     registered_ids = [reg['course_id'] for reg in user_regs]
     conn.close()
@@ -256,6 +279,46 @@ def add_recipe():
         return redirect(url_for('index'))
         
     return render_template('add_recipe.html')
+
+@app.route('/recipe/edit/<int:recipe_id>', methods=['GET', 'POST'])
+def edit_recipe(recipe_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    recipe = conn.execute('SELECT * FROM recipes WHERE recipe_id = ?', (recipe_id,)).fetchone()
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        time = request.form.get('time')
+        calories = request.form.get('calories')
+        protein = request.form.get('protein')
+        carbs = request.form.get('carbs')
+        fats = request.form.get('fats')
+        steps = request.form.get('steps')
+        cuisine = request.form.get('cuisine')
+        
+        conn.execute('''
+            UPDATE recipes SET title = ?, time = ?, calories = ?, protein = ?, carbs = ?, fats = ?, steps = ?, cuisine = ?
+            WHERE recipe_id = ?
+        ''', (title, time, calories, protein, carbs, fats, steps, cuisine, recipe_id))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('recipe_detail', recipe_id=recipe_id))
+        
+    conn.close()
+    return render_template('edit_recipe.html', recipe=recipe)
+
+@app.route('/recipe/delete/<int:recipe_id>', methods=['POST'])
+def delete_recipe(recipe_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    conn.execute('DELETE FROM recipes WHERE recipe_id = ?', (recipe_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
 
 # --- ADMIN VIEWS ---
 @app.route('/admin/dashboard')
