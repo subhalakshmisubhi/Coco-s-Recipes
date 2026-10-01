@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
+import os
 
-app = Flask(__name__)
+# Explicitly set the template folder path to avoid any TemplateNotFound errors
+template_dir = os.path.abspath(os.path.dirname(__file__)) + '/templates'
+app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'coco_secret_key'
 
 def get_db_connection():
