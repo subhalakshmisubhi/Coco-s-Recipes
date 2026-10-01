@@ -36,7 +36,7 @@ def init_db():
         )
     ''')
 
-    # 3. Ingredients Table (with ingredient_id and foreign key to recipe)
+    # 3. Ingredients Table (with ingredient_id)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS ingredients (
             ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,8 +82,8 @@ def init_db():
     cursor.execute('SELECT COUNT(*) FROM courses')
     if cursor.fetchone()[0] == 0:
         sample_courses = [
-            ('Mastering Italian Pasta', 'Chef Luigi', 'October 15, 2026', 'Learn the secrets of making handmade pasta from scratch.'),
-            ('Artisan Baking & Pastries', 'Chef Coco', 'October 22, 2026', 'Discover professional baking techniques for croissants and breads.')
+            ('Mastering Italian Pasta', 'Chef Luigi', 'October 15, 2026', 'Learn handmade pasta from scratch.'),
+            ('Artisan Baking & Pastries', 'Chef Coco', 'October 22, 2026', 'Discover professional baking techniques.')
         ]
         conn.executemany(
             'INSERT INTO courses (title, instructor, date, description) VALUES (?, ?, ?, ?)',
@@ -138,7 +138,6 @@ def index():
     conn = get_db_connection()
     recipes = conn.execute('SELECT * FROM recipes').fetchall()
     
-    # Fetch ingredients for each recipe so we can display ingredient_ids
     recipes_with_ingredients = []
     for recipe in recipes:
         recipe_dict = dict(recipe)
@@ -179,19 +178,16 @@ def add_recipe():
         calories = request.form.get('calories')
         steps = request.form.get('steps')
         cuisine = request.form.get('cuisine')
-        raw_ingredients = request.form.get('ingredients') # comma separated string
+        raw_ingredients = request.form.get('ingredients')
         
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        # Insert Recipe
         cursor.execute(
             'INSERT INTO recipes (title, time, calories, steps, cuisine) VALUES (?, ?, ?, ?, ?)',
             (title, time, calories, steps, cuisine)
         )
         recipe_id = cursor.lastrowid
         
-        # Insert individual ingredients to generate ingredient_ids
         if raw_ingredients:
             ingredient_items = [item.strip() for item in raw_ingredients.split(',')]
             for item in ingredient_items:
@@ -206,6 +202,32 @@ def add_recipe():
         return redirect(url_for('index'))
         
     return render_template('add_recipe.html')
+
+@app.route('/edit/<int:recipe_id>', methods=['GET', 'POST'])
+def edit_recipe(recipe_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    recipe = conn.execute('SELECT * FROM recipes WHERE recipe_id = ?', (recipe_id,)).fetchone()
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        time = request.form.get('time')
+        calories = request.form.get('calories')
+        steps = request.form.get('steps')
+        cuisine = request.form.get('cuisine')
+        
+        conn.execute(
+            'UPDATE recipes SET title = ?, time = ?, calories = ?, steps = ?, cuisine = ? WHERE recipe_id = ?',
+            (title, time, calories, steps, cuisine, recipe_id)
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for('index'))
+        
+    conn.close()
+    return render_template('edit_recipe.html', recipe=recipe)
 
 @app.route('/delete/<int:recipe_id>', methods=['POST'])
 def delete_recipe(recipe_id):
