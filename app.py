@@ -100,7 +100,11 @@ def register():
         password = request.form.get('password')
         email = request.form.get('email')
         
+        # This will print what you typed into your terminal
+        print(f"Attempting to register -> Username: {username}, Email: {email}")
+        
         if not username or not password or not email:
+            print("Error: Missing fields")
             return render_template('register.html', error='All fields are required!')
             
         try:
@@ -108,11 +112,15 @@ def register():
             conn.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', (username, password, email))
             conn.commit()
             conn.close()
+            print("Registration successful! Redirecting to login.")
             return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
+        except sqlite3.IntegrityError as e:
+            print(f"Database Error (Username exists?): {e}")
             return render_template('register.html', error='Username already exists!')
             
     return render_template('register.html')
+            
+    
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
