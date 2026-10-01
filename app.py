@@ -241,6 +241,17 @@ def edit_recipe(recipe_id):
     conn.close()
     return render_template('edit_recipe.html', recipe=recipe)
 
+@app.route('/delete/<int:recipe_id>', methods=['POST'])
+def delete_recipe(recipe_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    conn.execute('DELETE FROM recipes WHERE recipe_id = ?', (recipe_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
