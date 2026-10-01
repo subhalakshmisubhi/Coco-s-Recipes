@@ -9,44 +9,80 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark navbar-purple mb-4 shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#">👑 Coco's Recipes - Admin Panel</a>
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">Coco's Recipes — Admin Panel</a>
             <div class="navbar-nav ms-auto">
                 <span class="navbar-text text-light me-3">Admin: {{ session.username }}</span>
                 <a class="nav-link text-warning" href="{{ url_for('logout') }}">Logout</a>
             </div>
         </div>
     </nav>
-    <div class="container">
-        <h2 class="fw-bold mb-4" style="color: #4a154b;">System Management</h2>
-        
-        <h4 class="mt-4">Registered Users</h4>
-        <table class="table table-striped bg-white shadow-sm rounded">
-            <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th></tr></thead>
-            <tbody>
-                {% for u in users %}
-                <tr><td>{{ u.user_id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td><td><span class="badge bg-secondary">{{ u.role }}</span></td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
 
-        <h4 class="mt-5">All Recipes</h4>
-        <table class="table table-striped bg-white shadow-sm rounded">
-            <thead><tr><th>ID</th><th>Title</th><th>Cuisine</th><th>Action</th></tr></thead>
-            <tbody>
-                {% for r in recipes %}
-                <tr>
-                    <td>{{ r.recipe_id }}</td>
-                    <td>{{ r.title }}</td>
-                    <td>{{ r.cuisine }}</td>
-                    <td>
-                        <form action="{{ url_for('admin_delete_recipe', recipe_id=r.recipe_id) }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this recipe?')">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="container mb-5">
+        <div class="mb-3">
+            <a href="javascript:history.back()" class="btn btn-secondary btn-sm">&larr; Back</a>
+        </div>
+
+        <h2 class="mb-4">Admin Dashboard</h2>
+
+        <!-- Users Table -->
+        <div class="card shadow-sm mb-5 p-4">
+            <h4 class="mb-3">Registered Users</h4>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td><strong>#{{ user.id }}</strong></td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email or 'N/A' }}</td>
+                            <td><span class="badge bg-{{ 'danger' if user.role == 'admin' else 'secondary' }}">{{ user.role }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recipes Table -->
+        <div class="card shadow-sm p-4">
+            <h4 class="mb-3">All Recipes</h4>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Calories</th>
+                            <th>Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for recipe in recipes %}
+                        <tr>
+                            <td><strong>#{{ recipe.id }}</strong></td>
+                            <td><a href="{{ url_for('recipe_detail', id=recipe.id) }}">{{ recipe.title }}</a></td>
+                            <td>{{ recipe.category }}</td>
+                            <td>{{ recipe.calories }} kcal</td>
+                            <td>{{ recipe.duration }}</td>
+                            <td>
+                                <a href="{{ url_for('recipe_detail', id=recipe.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </body>
 </html>
