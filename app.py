@@ -13,7 +13,7 @@ app.config['MAIL_USERNAME'] = (
     'subhalakshmisubhi@gmail.com'  # Replace with your actual email
 )
 app.config['MAIL_PASSWORD'] = (
-    'abcdefghijklmnop'  # Replace with your 16-character app password
+    'ejdn ianf omil iulm'  # Replace with your 16-character app password
 )
 app.config['MAIL_DEFAULT_SENDER'] = 'subhalakshmisubhi@gmail.com'
 
