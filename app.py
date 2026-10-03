@@ -1,3 +1,4 @@
+import re
 import sqlite3
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_mail import Mail, Message
@@ -38,7 +39,7 @@ def init_db():
                 role TEXT DEFAULT 'user'
             )
         ''')
-    # Recipes Table (Includes duration)
+    # Recipes Table
     conn.execute('''
             CREATE TABLE IF NOT EXISTS recipes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +53,7 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
         ''')
-    # Courses / Workshops Table (Includes duration and fees)
+    # Courses / Workshops Table
     conn.execute('''
             CREATE TABLE IF NOT EXISTS courses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,12 +64,13 @@ def init_db():
                 fees TEXT
             )
         ''')
-    # Course Registrations Table
+    # Course Registrations Table (Added payment tracking)
     conn.execute('''
             CREATE TABLE IF NOT EXISTS course_registrations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 course_id INTEGER,
                 user_id INTEGER,
+                payment_status TEXT DEFAULT 'Paid',
                 UNIQUE(course_id, user_id),
                 FOREIGN KEY (course_id) REFERENCES courses (id),
                 FOREIGN KEY (user_id) REFERENCES users (id)
@@ -94,7 +96,7 @@ def init_db():
     if not cursor.fetchone():
       conn.execute(
           'INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)',
-          ('admin', 'admin123', 'subhalakshmisubhi@gmail.com', 'admin'),
+          ('admin', 'Admin123!', 'subhalakshmisubhi@gmail.com', 'admin'),
       )
       conn.commit()
 
@@ -243,37 +245,51 @@ def courses():
   return render_template('courses.html', courses=courses, registered_ids=registered_ids)
 
 
-@app.route('/course/register/<int:course_id>', methods=['POST'])
-def register_course(course_id):
+# --- WORKSHOP PAYMENT PORTAL ---
+@app.route('/course/pay/<int:course_id>', methods=['GET', 'POST'])
+def course_pay(course_id):
   if 'user_id' not in session:
     return redirect(url_for('login'))
 
-  try:
-    with get_db_connection() as conn:
-      conn.execute(
-          'INSERT INTO course_registrations (course_id, user_id) VALUES (?, ?)',
-          (course_id, session['user_id']),
-      )
-      conn.commit()
+  with get_db_connection() as conn:
+    course = conn.execute('SELECT * FROM courses WHERE id = ?', (course_id,)).fetchone()
 
-      user = conn.execute('SELECT username, email FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-      course = conn.execute('SELECT title, mentor FROM courses WHERE id = ?', (course_id,)).fetchone()
+  if not course:
+    return 'Course not found', 404
 
-    if user and user['email'] and course:
+  if request.method == 'POST':
+    # Process payment (simulated checkout)
+    card_name = request.form.get('card_name')
+    card_number = request.form.get('card_number')
+
+    if card_name and card_number:
       try:
-        msg = Message(
-            subject=f'Successfully Registered for {course["title"]}!',
-            recipients=[user['email']],
-            body=f'Hi {user["username"]},\n\nYou have successfully registered for the workshop: {course["title"]}.\nMentor: {course["mentor"]}\n\nWe look forward to seeing you there!\n\n- The Coco\'s Recipes Team'
-        )
-        mail.send(msg)
-      except Exception as e:
-        print(f'Workshop email dispatch failed: {e}')
+        with get_db_connection() as conn:
+          conn.execute(
+              'INSERT INTO course_registrations (course_id, user_id, payment_status) VALUES (?, ?, ?)',
+              (course_id, session['user_id'], 'Paid'),
+          )
+          conn.commit()
 
-  except sqlite3.IntegrityError:
-    pass
+          user = conn.execute('SELECT username, email FROM users WHERE id = ?', (session['user_id'],)).fetchone()
 
-  return redirect(url_for('courses'))
+        # Send Registration & Payment Confirmation Email
+        if user and user['email']:
+          try:
+            msg = Message(
+                subject=f'Payment Confirmed & Registered for {course["title"]}!',
+                recipients=[user['email']],
+                body=f'Hi {user["username"]},\n\nYour payment of {course["fees"]} for the workshop "{course["title"]}" was successful!\nMentor: {course["mentor"]}\nDuration: {course["duration"]}\n\nWe look forward to seeing you there!\n\n- The Coco\'s Recipes Team'
+            )
+            mail.send(msg)
+          except Exception as e:
+            print(f'Workshop email dispatch failed: {e}')
+
+        return redirect(url_for('courses'))
+      except sqlite3.IntegrityError:
+        return redirect(url_for('courses'))
+
+  return render_template('payment.html', course=course)
 
 
 @app.route('/course/unregister/<int:course_id>', methods=['POST'])
@@ -295,9 +311,9 @@ def unregister_course(course_id):
     if user and user['email'] and course:
       try:
         msg = Message(
-            subject=f'Registration Cancelled for {course["title"]}',
+            subject=f'Registration Cancelled & Refund Processed for {course["title"]}',
             recipients=[user['email']],
-            body=f'Hi {user["username"]},\n\nYour registration for the workshop "{course["title"]}" has been successfully cancelled.\n\nWe hope to see you in another workshop soon!\n\n- The Coco\'s Recipes Team'
+            body=f'Hi {user["username"]},\n\nYour registration for the workshop "{course["title"]}" has been cancelled and your refund has been initiated.\n\nWe hope to see you in another workshop soon!\n\n- The Coco\'s Recipes Team'
         )
         mail.send(msg)
       except Exception as e:
@@ -309,12 +325,18 @@ def unregister_course(course_id):
   return redirect(url_for('courses'))
 
 
+# --- SECURE USER REGISTRATION WITH VALIDATION ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
   if request.method == 'POST':
     username = request.form.get('username')
     password = request.form.get('password')
     email = request.form.get('email')
+
+    # Password validation: > 5 chars, at least one uppercase letter, at least one special character
+    if len(password) < 6 or not re.search(r'[A-Z]', password) or not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+      error_msg = 'Password must be longer than 5 characters, contain at least one uppercase letter, and at least one unique/special character (e.g. !@#$)'
+      return render_template('register.html', error=error_msg)
 
     try:
       with get_db_connection() as conn:
@@ -329,7 +351,7 @@ def register():
           msg = Message(
               subject="Welcome to Coco's Recipes!",
               recipients=[email],
-              body=f'Hi {username},\n\nThank you for registering on Coco\'s Recipes! We are thrilled to have you join our culinary community.\n\nHappy cooking!\n- The Coco\'s Recipes Team'
+              body=f'Hi {username},\n\nThank you for registering on Coco\'s Recipes! Your account has been securely created.\n\nHappy cooking!\n- The Coco\'s Recipes Team'
           )
           mail.send(msg)
         except Exception as e:
