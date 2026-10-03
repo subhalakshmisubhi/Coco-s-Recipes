@@ -10,12 +10,8 @@ app.secret_key = 'coco_super_secret_key'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = (
-    'subhalakshmisubhi@gmail.com'  # Replace with your actual email
-)
-app.config['MAIL_PASSWORD'] = (
-    'ejdn ianf omil iulm'  # Replace with your 16-character app password
-)
+app.config['MAIL_USERNAME'] = 'subhalakshmisubhi@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ejdn ianf omil iulm'  # Your app password
 app.config['MAIL_DEFAULT_SENDER'] = 'subhalakshmisubhi@gmail.com'
 
 mail = Mail(app)
@@ -200,13 +196,13 @@ def add_recipe():
   return render_template('add_recipe.html')
 
 
-@app.route('/edit/<int:id>', methods=['GET', 'POST'])
-def edit_recipe(id):
+@app.route('/edit/<int:recipe_id>', methods=['GET', 'POST'])
+def edit_recipe(recipe_id):
   if 'user_id' not in session:
     return redirect(url_for('login'))
 
   with get_db_connection() as conn:
-    recipe = conn.execute('SELECT * FROM recipes WHERE id = ?', (id,)).fetchone()
+    recipe = conn.execute('SELECT * FROM recipes WHERE id = ?', (recipe_id,)).fetchone()
 
   if not recipe:
     return 'Recipe not found', 404
@@ -222,21 +218,21 @@ def edit_recipe(id):
     with get_db_connection() as conn:
       conn.execute(
           'UPDATE recipes SET title = ?, ingredients = ?, instructions = ?, category = ?, calories = ?, duration = ? WHERE id = ?',
-          (title, ingredients, instructions, category, calories, duration, id),
+          (title, ingredients, instructions, category, calories, duration, recipe_id),
       )
       conn.commit()
-    return redirect(url_for('recipe_detail', id=id))
+    return redirect(url_for('recipe_detail', id=recipe_id))
 
   return render_template('edit_recipe.html', recipe=recipe)
 
 
-@app.route('/delete/<int:id>', methods=['POST'])
-def delete_recipe(id):
+@app.route('/delete/<int:recipe_id>', methods=['POST'])
+def delete_recipe(recipe_id):
   if 'user_id' not in session:
     return redirect(url_for('login'))
 
   with get_db_connection() as conn:
-    conn.execute('DELETE FROM recipes WHERE id = ?', (id,))
+    conn.execute('DELETE FROM recipes WHERE id = ?', (recipe_id,))
     conn.commit()
   return redirect(url_for('recipes'))
 
