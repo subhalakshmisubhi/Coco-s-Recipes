@@ -64,7 +64,7 @@ def init_db():
                 fees TEXT
             )
         ''')
-    # Course Registrations Table (Includes payment tracking)
+    # Course Registrations Table
     conn.execute('''
             CREATE TABLE IF NOT EXISTS course_registrations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,7 +118,7 @@ def init_db():
 init_db()
 
 
-# --- FORCED LOGIN ROOT ROUTE FOR PROJECT EVALUATION ---
+# --- FORCED LOGIN ROOT ROUTE ---
 @app.route('/')
 def index():
   if 'user_id' not in session:
@@ -258,7 +258,6 @@ def courses():
   return render_template('courses.html', courses=courses, registered_ids=registered_ids)
 
 
-# --- WORKSHOP PAYMENT PORTAL ---
 @app.route('/course/pay/<int:course_id>', methods=['GET', 'POST'])
 def course_pay(course_id):
   if 'user_id' not in session:
@@ -336,7 +335,6 @@ def unregister_course(course_id):
   return redirect(url_for('courses'))
 
 
-# --- SECURE USER REGISTRATION WITH VALIDATION ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
   if request.method == 'POST':
@@ -344,7 +342,6 @@ def register():
     password = request.form.get('password')
     email = request.form.get('email')
 
-    # Password validation: > 5 chars, at least one uppercase letter, at least one special character
     if len(password) < 6 or not re.search(r'[A-Z]', password) or not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
       error_msg = 'Password must be longer than 5 characters, contain at least one uppercase letter, and at least one unique/special character (e.g. !@#$)'
       return render_template('register.html', error=error_msg)
