@@ -196,13 +196,13 @@ def add_recipe():
   return render_template('add_recipe.html')
 
 
-@app.route('/edit/<int:recipe_id>', methods=['GET', 'POST'])
-def edit_recipe(recipe_id):
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit_recipe(id):
   if 'user_id' not in session:
     return redirect(url_for('login'))
 
   with get_db_connection() as conn:
-    recipe = conn.execute('SELECT * FROM recipes WHERE id = ?', (recipe_id,)).fetchone()
+    recipe = conn.execute('SELECT * FROM recipes WHERE id = ?', (id,)).fetchone()
 
   if not recipe:
     return 'Recipe not found', 404
@@ -218,21 +218,21 @@ def edit_recipe(recipe_id):
     with get_db_connection() as conn:
       conn.execute(
           'UPDATE recipes SET title = ?, ingredients = ?, instructions = ?, category = ?, calories = ?, duration = ? WHERE id = ?',
-          (title, ingredients, instructions, category, calories, duration, recipe_id),
+          (title, ingredients, instructions, category, calories, duration, id),
       )
       conn.commit()
-    return redirect(url_for('recipe_detail', id=recipe_id))
+    return redirect(url_for('recipe_detail', id=id))
 
   return render_template('edit_recipe.html', recipe=recipe)
 
 
-@app.route('/delete/<int:recipe_id>', methods=['POST'])
-def delete_recipe(recipe_id):
+@app.route('/delete/<int:id>', methods=['POST'])
+def delete_recipe(id):
   if 'user_id' not in session:
     return redirect(url_for('login'))
 
   with get_db_connection() as conn:
-    conn.execute('DELETE FROM recipes WHERE id = ?', (recipe_id,))
+    conn.execute('DELETE FROM recipes WHERE id = ?', (id,))
     conn.commit()
   return redirect(url_for('recipes'))
 
