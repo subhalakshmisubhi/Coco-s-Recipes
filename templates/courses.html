@@ -9,13 +9,23 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">Coco's Recipes</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('recipes') }}">Recipes</a>
+                <a class="nav-link active" href="{{ url_for('courses') }}">Workshops</a>
+                {% if session.get('user_id') %}
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container mb-5">
         <div class="mb-3">
             <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
         </div>
+        
         <h2 class="mb-4">Available Culinary Workshops</h2>
         <div class="row">
             {% for course in courses %}
@@ -24,11 +34,11 @@
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="badge bg-dark">ID: #{{ course.id }}</span>
-                            <span class="badge bg-success">{{ course.fees }}</span>
+                            <span class="badge bg-success fs-6">{{ course.fees }}</span>
                         </div>
                         <h5 class="card-title">{{ course.title }}</h5>
                         <h6 class="card-subtitle mb-2 text-muted">Mentor: {{ course.mentor }}</h6>
-                        <p class="card-text text-muted small">⏱️ Duration: {{ course.duration }}</p>
+                        <p class="card-text text-muted small mb-2">⏱️ Duration: {{ course.duration }}</p>
                         <p class="card-text flex-grow-1">{{ course.description }}</p>
                         
                         {% if session.get('user_id') %}
@@ -37,9 +47,7 @@
                                     <button type="submit" class="btn btn-outline-danger w-100">Cancel Registration</button>
                                 </form>
                             {% else %}
-                                <form action="{{ url_for('register_course', course_id=course.id) }}" method="POST">
-                                    <button type="submit" class="btn btn-primary w-100">Register for Workshop</button>
-                                </form>
+                                <a href="{{ url_for('course_pay', course_id=course.id) }}" class="btn btn-primary w-100">Pay & Register</a>
                             {% endif %}
                         {% else %}
                             <a href="{{ url_for('login') }}" class="btn btn-outline-primary w-100">Login to Register</a>
