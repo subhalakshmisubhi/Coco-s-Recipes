@@ -14,25 +14,34 @@
 
     <div class="container mb-5">
         <div class="mb-3">
-            <a href="javascript:history.back()" class="btn btn-secondary btn-sm">&larr; Back</a>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
         </div>
 
         <div class="card shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-primary fs-6">Recipe ID: #{{ recipe.id }}</span>
+                <span class="text-muted">Category: {{ recipe.category }}</span>
+            </div>
             <h1 class="mb-3">{{ recipe.title }}</h1>
             <h5 class="text-muted mb-4">
-                Category: {{ recipe.category }} | 
                 Calories: {{ recipe.calories }} kcal | 
                 ⏱️ Duration: {{ recipe.duration }}
             </h5>
             
-            <div class="mb-4">
-                <h4>Ingredients</h4>
-                <p style="white-space: pre-line;">{{ recipe.ingredients }}</p>
+            <div class="mb-4 p-3 bg-white border rounded">
+                <h4 class="text-dark border-bottom pb-2">Ingredients (Itemized Listing)</h4>
+                <ul class="mb-0 pt-2">
+                    {% for item in recipe.ingredients.split('\n') %}
+                        {% if item.strip() %}
+                            <li>{{ item.strip() }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
             </div>
 
-            <div class="mb-4">
-                <h4>Instructions</h4>
-                <p style="white-space: pre-line;">{{ recipe.instructions }}</p>
+            <div class="mb-4 p-3 bg-white border rounded">
+                <h4 class="text-dark border-bottom pb-2">Instructions</h4>
+                <p style="white-space: pre-line;" class="mb-0 pt-2">{{ recipe.instructions }}</p>
             </div>
 
             {% if session.get('user_id') and session.get('user_id') == recipe.user_id %}
@@ -54,10 +63,11 @@
                 {% for review in reviews %}
                 <div class="card mb-3 shadow-sm">
                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            <strong>{{ review.username }}</strong> — 
-                            <span class="text-warning">{% for i in range(review.rating) %}★{% endfor %}</span>
-                        </h6>
+                        <div class="d-flex justify-content-between">
+                            <h6 class="card-subtitle mb-2 text-muted"><strong>{{ review.username }}</strong></h6>
+                            <span class="badge bg-secondary">Review ID: #{{ review.id }}</span>
+                        </div>
+                        <div class="text-warning mb-2">{% for i in range(review.rating) %}★{% endfor %}</div>
                         <p class="card-text">{{ review.comment }}</p>
                     </div>
                 </div>
@@ -71,8 +81,6 @@
             <div class="card bg-light shadow-sm mt-4">
                 <div class="card-body">
                     <h5 class="card-title">Leave a Review</h5>
-                    <form action="{{ url_for('recipe_detail', id=recipe.id) }}" method="POST"> <!-- Note: review route -->
-                    </form>
                     <form action="{{ url_for('add_review', id=recipe.id) }}" method="POST">
                         <div class="mb-3">
                             <label for="rating" class="form-label">Rating (1 to 5 Stars)</label>
