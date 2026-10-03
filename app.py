@@ -9,8 +9,12 @@ app.secret_key = 'coco_super_secret_key'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'subhalakshmisubhi@gmail.com'
-app.config['MAIL_PASSWORD'] = 'ejdn ianf omil iulm'  # Your 16-character app password
+app.config['MAIL_USERNAME'] = (
+    'subhalakshmisubhi@gmail.com'  # Replace with your actual email
+)
+app.config['MAIL_PASSWORD'] = (
+    'abcdefghijklmnop'  # Replace with your 16-character app password
+)
 app.config['MAIL_DEFAULT_SENDER'] = 'subhalakshmisubhi@gmail.com'
 
 mail = Mail(app)
@@ -34,7 +38,7 @@ def init_db():
                 role TEXT DEFAULT 'user'
             )
         ''')
-    # Recipes Table (Added duration column)
+    # Recipes Table (Includes duration)
     conn.execute('''
             CREATE TABLE IF NOT EXISTS recipes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,13 +52,15 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
         ''')
-    # Courses / Workshops Table
+    # Courses / Workshops Table (Includes duration and fees)
     conn.execute('''
             CREATE TABLE IF NOT EXISTS courses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
-                mentor TEXT NOT NULL
+                mentor TEXT NOT NULL,
+                duration TEXT,
+                fees TEXT
             )
         ''')
     # Course Registrations Table
@@ -96,12 +102,12 @@ def init_db():
     cursor.execute('SELECT COUNT(*) FROM courses')
     if cursor.fetchone()[0] == 0:
       sample_courses = [
-          ('Mastering Italian Pasta', 'Learn how to make authentic fresh pasta from scratch.', 'Chef Marco'),
-          ('Bakery Essentials & Pastries', 'Perfect your baking skills with croissants and tarts.', 'Chef Chloe'),
-          ('Healthy Plant-Based Cooking', 'Delicious, nutrient-dense vegan recipes for everyday life.', 'Chef Alex'),
+          ('Mastering Italian Pasta', 'Learn how to make authentic fresh pasta from scratch.', 'Chef Marco', '2 Weeks', '$49'),
+          ('Bakery Essentials & Pastries', 'Perfect your baking skills with croissants and tarts.', 'Chef Chloe', '1 Week', '$39'),
+          ('Healthy Plant-Based Cooking', 'Delicious, nutrient-dense vegan recipes for everyday life.', 'Chef Alex', '3 Days', '$29'),
       ]
       conn.executemany(
-          'INSERT INTO courses (title, description, mentor) VALUES (?, ?, ?)',
+          'INSERT INTO courses (title, description, mentor, duration, fees) VALUES (?, ?, ?, ?, ?)',
           sample_courses,
       )
       conn.commit()
