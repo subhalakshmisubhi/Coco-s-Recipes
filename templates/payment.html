@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow p-4">
+            <h3 class="mb-3">Complete Payment</h3>
+            <p>Registering for: <strong>{{ workshop_name }}</strong></p>
+            <form method="POST">
+                <div class="mb-3"><label class="form-label">Cardholder Name</label><input type="text" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">Card Number</label><input type="text" class="form-control" placeholder="1234 5678 9012 3456" required></div>
+                <button type="submit" class="btn btn-primary w-100">Pay & Register</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
