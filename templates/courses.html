@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Available Courses</h2>
+<div class="card shadow p-4">
+    <p>Explore our certified culinary programs and structured video modules.</p>
+    <a href="{{ url_for('course_pay', course_id=1) }}" class="btn btn-primary">Enroll in Course #1 (Master Chef Path)</a>
+</div>
+{% endblock %}
