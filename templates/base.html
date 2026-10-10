@@ -31,7 +31,10 @@
         </div>
     </nav>
     <div class="container mt-3">
-        <button onclick="history.back()" class="btn btn-outline-secondary btn-sm mb-3">← Back</button>
+        <!-- Back button only shows when user is logged in -->
+        {% if session.get('user_id') %}
+            <button onclick="history.back()" class="btn btn-outline-secondary btn-sm mb-3">← Back</button>
+        {% endif %}
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
