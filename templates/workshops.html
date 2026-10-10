@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Workshops & Masterclasses</h2>
+<div class="row mb-5">
+    <div class="col-md-6 mb-3">
+        <div class="card shadow p-3">
+            <h4>Advanced Baking Masterclass</h4>
+            <p>Professional pastry techniques & artisan breads.</p>
+            <p><strong>Fee: ₹1,499</strong></p>
+            <a href="{{ url_for('register_workshop', workshop_name='Advanced Baking Masterclass') }}" class="btn btn-primary">Register Now</a>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card shadow p-3">
+            <h4>Italian Pasta Workshop</h4>
+            <p>Handmade pasta from scratch & sauces.</p>
+            <p><strong>Fee: ₹1,199</strong></p>
+            <a href="{{ url_for('register_workshop', workshop_name='Italian Pasta Workshop') }}" class="btn btn-primary">Register Now</a>
+        </div>
+    </div>
+</div>
+
+<h3>Your Registrations</h3>
+<div class="card shadow p-3">
+    {% if registrations %}
+        <ul class="list-group">
+            {% for reg in registrations %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ reg.workshop_name }} - <span class="badge bg-success">{{ reg.payment_status }}</span>
+                    <a href="{{ url_for('cancel_workshop', reg_id=reg.id) }}" class="btn btn-danger btn-sm">Cancel</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No workshop registrations yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
