@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow p-4 mb-4">
+    <h2>{{ recipe.title }}</h2>
+    <h5 class="text-muted">Category: {{ recipe.category }} | Duration: {{ recipe.duration }}</h5>
+    <hr>
+    <h5>Ingredients:</h5><p>{{ recipe.ingredients }}</p>
+    <h5>Instructions:</h5><p>{{ recipe.instructions }}</p>
+    {% if recipe.user_id == session.get('user_id') or session.get('role') == 'admin' %}
+        <div class="mt-3">
+            <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" class="btn btn-warning btn-sm">Edit</a>
+            <a href="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" class="btn btn-danger btn-sm">Delete</a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card shadow p-4 mb-4">
+    <h4>Leave a Review & Star Rating</h4>
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <select name="rating" class="form-select" required>
+                <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
+                <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
+                <option value="3">⭐⭐⭐ (3 Stars)</option>
+                <option value="2">⭐⭐ (2 Stars)</option>
+                <option value="1">⭐ (1 Star)</option>
+            </select>
+        </div>
+        <div class="mb-3"><label class="form-label">Comment</label><textarea name="comment" class="form-control" rows="3" required></textarea></div>
+        <button type="submit" class="btn btn-primary">Post Review</button>
+    </form>
+</div>
+
+<div class="card shadow p-4">
+    <h4>User Reviews</h4>
+    {% if reviews %}
+        <ul class="list-group">
+            {% for review in reviews %}
+                <li class="list-group-item">
+                    <strong>{{ review.username }}</strong> - 
+                    <span class="text-warning">{% for i in range(review.rating) %}⭐{% endfor %}</span>
+                    <p class="mb-1 mt-2">{{ review.comment }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No reviews yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
