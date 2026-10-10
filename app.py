@@ -23,6 +23,19 @@ app.config['MAIL_USERNAME'] = 'subhalakshmisubhi@gmail.com'
 app.config['MAIL_PASSWORD'] = 'ejdnianfomiliulm'
 mail = Mail(app)
 
+def send_notification_email(recipient_email, subject, body):
+    """Helper function to safely dispatch emails without blocking app execution"""
+    try:
+        msg = Message(
+            subject=subject,
+            sender='subhalakshmisubhi@gmail.com',
+            recipients=[recipient_email]
+        )
+        msg.body = body
+        mail.send(msg)
+    except Exception as e:
+        print(f"Email dispatch error: {str(e)}")
+
 def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
@@ -165,6 +178,14 @@ def login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
+            
+            # Send Login Notification Email
+            send_notification_email(
+                user['email'],
+                'Login Notification - Coco\'s Recipes',
+                f'Hello {user["username"]},\n\nYou have successfully logged into your Coco\'s Recipes account.'
+            )
+            
             flash('Logged in successfully!', 'success')
             return redirect(url_for('index'))
         else:
@@ -190,6 +211,14 @@ def register():
                            (username, email, password, 'user'))
             conn.commit()
             conn.close()
+            
+            # Send Registration Success Email
+            send_notification_email(
+                email,
+                'Registration Successful - Coco\'s Recipes',
+                f'Hello {username},\n\nWelcome to Coco\'s Recipes! Your account has been successfully created.'
+            )
+            
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
@@ -236,13 +265,25 @@ def add_recipe():
         user_id = session['user_id']
         
         conn = sqlite3.connect('database.db')
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO recipes (title, category, duration, calories, ingredients, instructions, user_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (title, category, duration, calories, ingredients, instructions, user_id))
         conn.commit()
+        
+        # Fetch user email for recipe addition notification
+        cursor.execute('SELECT email FROM users WHERE id = ?', (user_id,))
+        u_email = cursor.fetchone()['email']
         conn.close()
+        
+        send_notification_email(
+            u_email,
+            'Recipe Added - Coco\'s Recipes',
+            f'Hello,\n\nYour recipe "{title}" has been successfully added to Coco\'s Recipes.'
+        )
+        
         flash('Recipe added successfully!', 'success')
         return redirect(url_for('index'))
         
@@ -366,6 +407,17 @@ def delete_recipe(recipe_id):
     if recipe and (recipe['user_id'] == session['user_id'] or session.get('role') == 'admin'):
         cursor.execute('DELETE FROM recipes WHERE id = ?', (recipe_id,))
         conn.commit()
+        
+        # Fetch user email for recipe deletion notification
+        cursor.execute('SELECT email FROM users WHERE id = ?', (session['user_id'],))
+        u_email = cursor.fetchone()['email']
+        
+        send_notification_email(
+            u_email,
+            'Recipe Deleted - Coco\'s Recipes',
+            f'Hello,\n\nYour recipe "{recipe["title"]}" has been deleted from Coco\'s Recipes.'
+        )
+        
         flash('Recipe deleted successfully.', 'success')
     else:
         flash('Unauthorized action or recipe not found.', 'danger')
@@ -410,6 +462,13 @@ def admin_add_user():
                            (username, email, password, role))
             conn.commit()
             conn.close()
+            
+            send_notification_email(
+                email,
+                'Account Created by Admin - Coco\'s Recipes',
+                f'Hello {username},\n\nAn admin has created an account for you on Coco\'s Recipes.\nYour username: {username}\nYour password: {password}'
+            )
+            
             flash('User added successfully!', 'success')
             return redirect(url_for('admin_users'))
         except sqlite3.IntegrityError:
@@ -475,11 +534,23 @@ def payment(workshop_name):
             return redirect(url_for('payment', workshop_name=workshop_name))
             
         conn = sqlite3.connect('database.db')
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('INSERT INTO workshop_registrations (user_id, workshop_name, payment_status) VALUES (?, ?, ?)',
                        (session['user_id'], workshop_name, 'Paid'))
         conn.commit()
+        
+        # Fetch user email for workshop registration confirmation email
+        cursor.execute('SELECT email FROM users WHERE id = ?', (session['user_id'],))
+        u_email = cursor.fetchone()['email']
         conn.close()
+        
+        send_notification_email(
+            u_email,
+            f'Workshop Registration Confirmed - {workshop_name}',
+            f'Hello,\n\nYour payment was successful! You are now registered for "{workshop_name}".'
+        )
+        
         flash(f'Payment successful! Registered for {workshop_name}.', 'success')
         return redirect(url_for('workshops'))
         
@@ -503,9 +574,26 @@ def cancel_workshop(reg_id):
         return redirect(url_for('login'))
         
     conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM workshop_registrations WHERE id = ?', (reg_id,))
-    conn.commit()
+    cursor.execute('SELECT * FROM workshop_registrations WHERE id = ?', (reg_id,))
+    reg = cursor.fetchone()
+    
+    if reg:
+        w_name = reg['workshop_name']
+        cursor.execute('DELETE FROM workshop_registrations WHERE id = ?', (reg_id,))
+        conn.commit()
+        
+        # Fetch user email for cancellation confirmation email
+        cursor.execute('SELECT email FROM users WHERE id = ?', (session['user_id'],))
+        u_email = cursor.fetchone()['email']
+        
+        send_notification_email(
+            u_email,
+            f'Workshop Cancelled - {w_name}',
+            f'Hello,\n\nYour registration for "{w_name}" has been successfully cancelled.'
+        )
+        
     conn.close()
     flash('Workshop registration cancelled successfully.', 'info')
     return redirect(url_for('workshops'))
@@ -520,18 +608,22 @@ def courses():
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
-        try:
-            msg = Message(
-                subject='Password Reset - Coco\'s Recipes',
-                sender='subhalakshmisubhi@gmail.com',
-                recipients=[email]
+        conn = sqlite3.connect('database.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+        user = cursor.fetchone()
+        conn.close()
+        
+        if user:
+            send_notification_email(
+                email,
+                'Password Recovery - Coco\'s Recipes',
+                f'Hello {user["username"]},\n\nYour account password is: {user["password"]}\n\nPlease keep it safe and secure.'
             )
-            msg.body = 'Hello,\n\nYour Password Reset Token is: COCO-9982-RESET\nPlease use this token to update your password.'
-            mail.send(msg)
-            flash('Password reset email sent successfully! Check your inbox.', 'success')
-        except Exception as e:
-            # Cloud sandbox firewall fallback for viva presentation
-            flash('Password Reset Link generated successfully: Token [COCO-9982-RESET] (Cloud environment simulated email delivery).', 'success')
+            flash('Your actual password has been sent to your email successfully!', 'success')
+        else:
+            flash('Email address not found in our records.', 'danger')
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
 
