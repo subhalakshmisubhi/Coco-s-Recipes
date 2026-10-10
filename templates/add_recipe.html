@@ -5,11 +5,30 @@
         <div class="card shadow p-4">
             <h3 class="mb-3">Add New Recipe</h3>
             <form method="POST">
-                <div class="mb-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">Category</label><input type="text" name="category" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">Duration</label><input type="text" name="duration" class="form-control"></div>
-                <div class="mb-3"><label class="form-label">Ingredients</label><textarea name="ingredients" class="form-control" rows="3" required></textarea></div>
-                <div class="mb-3"><label class="form-label">Instructions</label><textarea name="instructions" class="form-control" rows="4" required></textarea></div>
+                <div class="mb-3">
+                    <label class="form-label">Title (Letters only)</label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g. Garlic Pasta" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Category (Letters only)</label>
+                    <input type="text" name="category" class="form-control" placeholder="e.g. Italian" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Duration</label>
+                    <input type="text" name="duration" class="form-control" placeholder="e.g. 20 mins">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Calories</label>
+                    <input type="text" name="calories" class="form-control" placeholder="e.g. 450 kcal" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ingredients</label>
+                    <textarea name="ingredients" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Instructions</label>
+                    <textarea name="instructions" class="form-control" rows="4" required></textarea>
+                </div>
                 <button type="submit" class="btn btn-primary w-100">Add Recipe</button>
             </form>
         </div>
