@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow p-4">
+            <h3 class="mb-3">Edit Recipe</h3>
+            <form method="POST">
+                <div class="mb-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" value="{{ recipe.title }}" required></div>
+                <div class="mb-3"><label class="form-label">Category</label><input type="text" name="category" class="form-control" value="{{ recipe.category }}" required></div>
+                <div class="mb-3"><label class="form-label">Duration</label><input type="text" name="duration" class="form-control" value="{{ recipe.duration }}"></div>
+                <div class="mb-3"><label class="form-label">Ingredients</label><textarea name="ingredients" class="form-control" rows="3" required>{{ recipe.ingredients }}</textarea></div>
+                <div class="mb-3"><label class="form-label">Instructions</label><textarea name="instructions" class="form-control" rows="4" required>{{ recipe.instructions }}</textarea></div>
+                <button type="submit" class="btn btn-primary w-100">Update Recipe</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
