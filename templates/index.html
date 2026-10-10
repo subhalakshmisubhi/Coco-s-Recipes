@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row mb-4">
-    <div class="col-md-8 mx-auto">
+    <div class="col-md-9 mx-auto">
         <form method="GET" action="{{ url_for('index') }}" class="input-group">
-            <input type="text" name="query" class="form-control" placeholder="Search by title or ingredients..." value="{{ query }}">
+            <input type="text" name="query" class="form-control" placeholder="Search recipes by title or ingredients..." value="{{ query }}">
             <select name="category" class="form-select">
                 <option value="">All Categories</option>
                 <option value="Italian" {% if category == 'Italian' %}selected{% endif %}>Italian</option>
@@ -13,6 +13,7 @@
                 <option value="Asian" {% if category == 'Asian' %}selected{% endif %}>Asian</option>
             </select>
             <button class="btn btn-primary" type="submit">Search</button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Reset</a>
         </form>
     </div>
 </div>
