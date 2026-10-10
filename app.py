@@ -14,10 +14,11 @@ from flask_mail import Mail, Message
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key_here'
 
-# --- Flask-Mail Configuration ---
+# --- Flask-Mail Configuration (Port 465 SSL for Cloud Environments) ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = 'subhalakshmisubhi@gmail.com'
 app.config['MAIL_PASSWORD'] = 'ejdnianfomiliulm'
 mail = Mail(app)
@@ -218,12 +219,11 @@ def add_recipe():
         ingredients = request.form.get('ingredients', '').strip()
         instructions = request.form.get('instructions', '').strip()
         
-        # Strict Regex Validation: Letters and spaces only for Title and Category
         if not title or not re.match("^[A-Za-z\s]+$", title):
-            flash('Recipe title must contain letters only (no numbers or symbols).', 'danger')
+            flash('Recipe title must contain letters only (no numbers).', 'danger')
             return redirect(url_for('add_recipe'))
         if not category or not re.match("^[A-Za-z\s]+$", category):
-            flash('Category must contain letters only (no numbers or symbols).', 'danger')
+            flash('Category must contain letters only (no numbers).', 'danger')
             return redirect(url_for('add_recipe'))
         if not calories:
             flash('Calories field is required.', 'danger')
@@ -528,7 +528,7 @@ def forgot_password():
             mail.send(msg)
             flash('Password reset email sent successfully! Check your inbox.', 'success')
         except Exception as e:
-            flash('Password reset link generated successfully! (SMTP simulated for cloud environment).', 'success')
+            flash(f'Error sending email: {str(e)}', 'danger')
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
 
