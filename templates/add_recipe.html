@@ -7,11 +7,11 @@
             <form method="POST">
                 <div class="mb-3">
                     <label class="form-label">Title (Letters only)</label>
-                    <input type="text" name="title" class="form-control" placeholder="e.g. Garlic Pasta" required>
+                    <input type="text" name="title" class="form-control" pattern="[A-Za-z\s]+" title="Letters and spaces only" placeholder="e.g. Garlic Pasta" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Category (Letters only)</label>
-                    <input type="text" name="category" class="form-control" placeholder="e.g. Italian" required>
+                    <input type="text" name="category" class="form-control" pattern="[A-Za-z\s]+" title="Letters and spaces only" placeholder="e.g. Italian" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Duration</label>
