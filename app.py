@@ -209,14 +209,24 @@ def add_recipe():
         return redirect(url_for('login'))
         
     if request.method == 'POST':
-        title = request.form['title']
-        category = request.form['category']
-        duration = request.form['duration']
-        ingredients = request.form['ingredients']
-        instructions = request.form['instructions']
+        title = request.form.get('title', '').strip()
+        category = request.form.get('category', '').strip()
+        duration = request.form.get('duration', '').strip()
+        ingredients = request.form.get('ingredients', '').strip()
+        instructions = request.form.get('instructions', '').strip()
         
-        if not title or not category or not ingredients or not instructions:
-            flash('All required fields must be filled.', 'danger')
+        # Strict Validations
+        if not title or len(title) < 3:
+            flash('Recipe title must be at least 3 characters long.', 'danger')
+            return redirect(url_for('add_recipe'))
+        if not category:
+            flash('Please specify a category.', 'danger')
+            return redirect(url_for('add_recipe'))
+        if not ingredients or len(ingredients) < 5:
+            flash('Ingredients list is too short or empty.', 'danger')
+            return redirect(url_for('add_recipe'))
+        if not instructions or len(instructions) < 10:
+            flash('Instructions must be at least 10 characters long.', 'danger')
             return redirect(url_for('add_recipe'))
             
         user_id = session['user_id']
@@ -464,7 +474,17 @@ def courses():
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
-        flash('Password reset instructions have been sent to your email.', 'info')
+        try:
+            msg = Message(
+                subject='Password Reset - Coco\'s Recipes',
+                sender='subhalakshmisubhi@gmail.com',
+                recipients=[email]
+            )
+            msg.body = 'Hello,\n\nYou requested a password reset for your Coco\'s Recipes account. Please use your credentials or contact the admin to recover your account.'
+            mail.send(msg)
+            flash('Password reset email sent successfully! Check your inbox.', 'success')
+        except Exception as e:
+            flash(f'Error sending email: {str(e)}', 'danger')
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
 
