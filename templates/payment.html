@@ -7,12 +7,12 @@
             <p>Registering for: <strong>{{ workshop_name }}</strong></p>
             <form method="POST">
                 <div class="mb-3">
-                    <label class="form-label">Cardholder Name</label>
-                    <input type="text" name="card_name" class="form-control" placeholder="Subhalakshmi" required>
+                    <label class="form-label">Cardholder Name (Letters only)</label>
+                    <input type="text" name="card_name" class="form-control" onkeypress="return event.charCode >= 65 && event.charCode <= 90 || event.charCode >= 97 && event.charCode <= 122 || event.charCode == 32" placeholder="Subhalakshmi" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Card Number</label>
-                    <input type="text" name="card_number" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                    <label class="form-label">Card Number (Numbers only)</label>
+                    <input type="text" name="card_number" class="form-control" inputmode="numeric" onkeypress="return event.charCode >= 48 && event.charCode <= 57" placeholder="1234567890123456" maxlength="19" required>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -20,8 +20,8 @@
                         <input type="text" name="expiry" class="form-control" placeholder="MM/YY" maxlength="5" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">CVV</label>
-                        <input type="password" name="cvv" class="form-control" placeholder="123" maxlength="4" required>
+                        <label class="form-label">CVV (Numbers only)</label>
+                        <input type="password" name="cvv" class="form-control" inputmode="numeric" onkeypress="return event.charCode >= 48 && event.charCode <= 57" placeholder="123" maxlength="4" required>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Pay Now & Register</button>
